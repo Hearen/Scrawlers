@@ -1,10 +1,10 @@
 #-*- coding:utf-8 -*-
-
-"""
-@since 2015-6-30
-@author: Hearen
-@contact: LHearen@126.com
-"""
+'''
+Author: LHearen
+E-mail: LHearen@126.com
+Time  :	2015-12-05 10:46
+Description: Used to collect the major urls for the club;
+'''
 import urllib
 import time
 import datetime
@@ -30,21 +30,21 @@ class ClubParser():
         self.__url = url #the root url of a club
         self.__PostUrlList = []
         self.__PageUrlQueue = multiprocessing.Manager().Queue()#used to store page urls of the club
-        
+
     def __initPageUrls(self):
-        
+
         for i in range(3):
             try:
                 browser = spynner.Browser()
                 browser.create_webview()
                 browser.set_html_parser(pyquery.PyQuery)
                 browser.load(self.__url, 20)
-                 
+
                 try:
                     browser.wait_load(10)
                 except:
                     pass
-                 
+
                 html = browser.html.encode('utf-8')
                 browser.close()
                 if not isinstance(html, int):
@@ -70,15 +70,15 @@ class ClubParser():
         for i in range(1, pageAmount + 1):
             url = self.__url + '/p' + str(i) + '?type=all&order=rtime'
             self.__PageUrlQueue.put(url)
-        
+
     #return the next page url or False
     def __parsePage(self, pageUrl):
         """
-        using the url of the club - stored in self.__url 
+        using the url of the club - stored in self.__url
         to retrive all the posts urls belonging to the club
         isFirstPage - used to identify the first post url - to record the last time stamp so far
         return - can be None or url of next page
-        """        
+        """
 
         #withdraw the page of the given url for three times - in case of failure the first time
         for i in range(3):
@@ -87,12 +87,12 @@ class ClubParser():
                 browser.create_webview()
                 browser.set_html_parser(pyquery.PyQuery)
                 browser.load(self.__url, 10)
-                 
+
                 try:
                     browser.wait_load(10)
                 except:
                     pass
-                 
+
                 html = browser.html.encode('utf-8')
                 browser.close()
                 if not isinstance(html, int):
@@ -134,7 +134,7 @@ class ClubParser():
                 continue
         print('Page parsed successfully URL:%s'%pageUrl)
         return True
-        
+
     def __savePostUrls(self):
         '''
         make sure the urls are fetched
@@ -149,7 +149,7 @@ class ClubParser():
             f.close()
         except IOError as e:
             print('write_list IOException:%s'%e)
-    
+
 
     def __parseClub(self):
         """
@@ -157,19 +157,19 @@ class ClubParser():
         url - the root url of a  club
         initDeadline - the default timestamp when there is no file existed
         """
-        
+
         while not self.__PageUrlQueue.empty() and \
             self.__parsePage(self.__PageUrlQueue.get()):
             if len(self.__PostUrlList) > 50:
                 break
-        
+
         print("Length of List:%d", len(self.__PostUrlList))
-        
+
         processes = []
         while len(self.__PostUrlList):
             listLen=len(self.__PostUrlList)
             if MaxProcessNum > listLen:
-                processNum = listLen 
+                processNum = listLen
             else:
                 processNum = MaxProcessNum
             for i in range(processNum):
@@ -179,9 +179,9 @@ class ClubParser():
                 processes.append(subProcess)
                 subProcess.start()
                 subProcess.join()
-            
+
         print('Done retrieving all posts of club url : %s' % self.__url)
-        return True 
+        return True
 
 
     def parse(self):
@@ -192,7 +192,7 @@ class ClubParser():
         #childThread = threading.Thread(target=self.__parseClub)
         #childThread.start()
         #childThread.join()
-        
+
 if __name__ == '__main__':
     reload(sys)
     print(sys.getdefaultencoding())
@@ -208,14 +208,14 @@ if __name__ == '__main__':
                'http://women.club.sohu.com/xyyx/threads',
                'http://women.club.sohu.com/zz482/threads'
                ]
-    
+
     print('Start working: %s'%datetime.datetime.now())
     startTime = datetime.datetime.now()
     '''
     for clubUrl in clubUrls:
         clubParser = ClubParser(clubUrl, 1414639980)
         clubParser.parse()
-    
+
     '''
     #handle each club
     subProcesses = []
@@ -224,11 +224,11 @@ if __name__ == '__main__':
             subProcess = Process(target=clubParser.parse)
             subProcess.start()
             subProcesses.append(subProcess)
-            
+
     for subProcess in subProcesses:
         subProcess.join()
-    
+
     print('Finished at: %s'%datetime.datetime.now())
     endTime = datetime.datetime.now()
     print('Parse all clubs successfully! Time cost: %s'%str(endTime - startTime))
-    
+

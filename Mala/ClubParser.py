@@ -1,10 +1,10 @@
 #coding:utf-8
 '''
-@author: Hearen
-@contact: LHearen@126.com
+Author: LHearen
+E-mail: LHearen@126.com
+Time  :	2015-12-05 10:46
+Description: Used to collect the major urls for the club;
 '''
-"""
-"""
 import urllib
 import time
 import datetime
@@ -32,14 +32,14 @@ class ClubParser():
         self.__TimeStampFilename = './data/' + self.__url[7:].replace(r'/', '-').replace('.html', '').replace('.', '-') + '.txt'
 
     #return the next page url or False
-    
+
     def __parsePage(self, pageUrl, isFirstPage):
         """
-        using the url of the club - stored in self.__url 
+        using the url of the club - stored in self.__url
         to retrive all the posts urls belonging to the club
         isFirstPage - used to identify the first post url - to record the last time stamp so far
         return - can be None or url of next page
-        """        
+        """
         #print 'Retrieving from %s' % pageUrl
 
         #withdraw the page of the given url for three times - in case of failure the first time
@@ -74,10 +74,10 @@ class ClubParser():
                 lastPostTimeString = postSoup.findAll('td', class_='by')[1].find('em').find('a').string.encode('utf-8')
                 postUrl = postSoup.find('th').find('a', class_='s xst')['href'].encode('utf-8')
                 #only root_url and subUrl both can identify the post url
-                
+
                 timeArray = time.strptime(lastPostTimeString, "%Y-%m-%d %H:%M")
-                
-                #only the first page and the first timestamp 
+
+                #only the first page and the first timestamp
                 #can be used as the last modified time
                 #record the last modified timestamp of the club
                 if((isFirstPage) and (timestamp == 0)):
@@ -102,7 +102,7 @@ class ClubParser():
                 continue
         #print('Page parsed successfully URL:%s'%pageUrl)
         return True
-        
+
     def __savePostUrls(self):
         '''
         make sure the urls are fetched
@@ -118,10 +118,10 @@ class ClubParser():
             f.close()
         except IOError as e:
             print('write_list IOException:%s'%e)
-    
+
     def __saveLastTimeStamp(self):
         """
-        save the last modified timestamp and time to a file named by the club url 
+        save the last modified timestamp and time to a file named by the club url
         the first line of the file
         update the last modified time
         """
@@ -163,11 +163,11 @@ class ClubParser():
         #print('Start parsing club: %s'%self.__url)
         #thread = threading.current_thread()
         #print(thread.getName())
-        
+
         self.__initLastTimeStamp0()
-        
+
         #print(time.ctime(self.__LastTimeStamp0))
-        
+
         #in downlist.parsePage, all the url in a page is stored in urlList
         #using next_page to traverse the nextpage and store the other urls of post
         self.__parsePage(self.__url, True)
@@ -180,7 +180,7 @@ class ClubParser():
                 break;
             if len(self.__UrlList) > 300:
                 break
-        
+
         #update the last modifed time of the current club
         self.__saveLastTimeStamp()
         '''
@@ -194,7 +194,7 @@ class ClubParser():
         while len(self.__UrlList):
             listLen=len(self.__UrlList)
             if MaxProcessNum > listLen:
-                processNum = listLen 
+                processNum = listLen
             else:
                 processNum = MaxProcessNum
             for i in range(processNum):
@@ -204,9 +204,9 @@ class ClubParser():
                 processes.append(subProcess)
                 subProcess.start()
                 subProcess.join()
-        
+
         print('Done parsing all posts of club url : %s' % self.__url)
-        return True 
+        return True
 
 
     def parse(self):
@@ -215,14 +215,14 @@ class ClubParser():
         #childThread = threading.Thread(target=self.__parseClub)
         #childThread.start()
         #childThread.join()
-        
+
 if __name__ == '__main__':
     reload(sys)
     print(sys.getdefaultencoding())
     #1. 麻辣生活论坛 - 医院论坛；
     #2. 麻辣生活论坛 - 财富沙龙；
     #3. 麻辣生活论坛 - 亲子乐园；
-    #4. 麻辣生活论坛 - 情感空间；  
+    #4. 麻辣生活论坛 - 情感空间；
     #5. 麻辣生活论坛 - 消费维权
     clubUrls = [
                'http://www.mala.cn/forum-57-1.html',
@@ -246,12 +246,12 @@ if __name__ == '__main__':
             subProcess = Process(target=clubParser.parse)
             subProcess.start()
             subProcesses.append(subProcess)
-            
+
     for subProcess in subProcesses:
         subProcess.join()
-    
+
     #print(datetime.datetime.now())
     endTime = datetime.datetime.now()
     print(endTime - startTime)
     print('Parse all clubs successfully!')
-    
+

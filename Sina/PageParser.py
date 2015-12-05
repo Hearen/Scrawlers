@@ -1,8 +1,9 @@
 #coding=utf-8
 '''
-@since: 2015-6-24
-@author: Hearen
-@contact: LHearen@126.com
+Author: LHearen
+E-mail: LHearen@126.com
+Time  :	2015-12-05 10:47
+Description: Used to collect and parse the posts;
 '''
 import urllib
 import re
@@ -21,14 +22,14 @@ import subprocess
 class PostParser():
     def __init__(self, url):
         self.__url = url # the url of the post - the very beginning page
-        
+
         self.__SubDir = url[7:].split('/thread')[0].replace('.', '-')
         #./data/__SubDir/__PostId.txt used for different clubs
         #used by store and __initStartIndex
         #initialized in __initUrlQueue
         self.__UrlQueue = multiprocessing.Manager().Queue()##store all the urls to be parsed - to be parsed, not all maybe
         # - initialized in __initUrlQueue
-        self.__PostId = 0 #the unique id of the post parsed from the url 
+        self.__PostId = 0 #the unique id of the post parsed from the url
         #- initialized in __initUrlQueue
         self.__PageAmount = 1 #the total amount of the pages belonging to the post
         #- initialized in __initUrlQueue
@@ -36,23 +37,23 @@ class PostParser():
         #- initialized in __initStartIndex called in __initUrlQueue
         self.__LastFloorIndex = 0 #indexing the last floor parsed last time
         #- initialized in __initStartIndex called in __initUrlQueue
-        
+
         self.__Title = ''#the title and type and the like info will be stored
         #- initialized in __pageParser - only the first page will initialize this value
         self.__PostTime = ''#the post time will be the same with the post time of floor 1
         #- initialized in __pageParser - only the first page will initialize this value
-        
+
         self.__MaxFloorIndex = 1 #the maximum of floor
         #- set in pageParser - dynamically changed via the floor
-        
+
         #this factor can be useless when it comes to updated version
         #self.__BrowserCountString = '' #a number string of browser total amount - 99,232
         #- initialized in __pageParser - only floor 1 will initialize this value
-        
+
         self.__PageDic = {} #store all the page lists
         #each page list stores all the post dics in its page
         #the dics are used to store the info of each post
-    
+
     def __initStartIndex(self):
         """
         should be invoked after the self.__PostId initialized in initUrlQueue
@@ -60,7 +61,7 @@ class PostParser():
         to get the last page index and floor number parsed already
         """
         filename = './data/%s/%s'%(self.__SubDir, str(self.__PostId) + '.txt')
-        try:#handle the unexisting case - not create a file here 
+        try:#handle the unexisting case - not create a file here
             #- just wait the store method to do it
             f = open(filename, 'r')
             tmpString = ''
@@ -110,11 +111,11 @@ class PostParser():
         #if at last, still get nothing, return None
         if isinstance(html, int):
             return False
-        
+
         #successfully withdraw the page content
         html = html.encode('utf-8')
         soup = BeautifulSoup(str(html))
-        
+
         #get the total amount of pages of this post
         #=======================================================================
         # pageAmountString = soup.find('div', class_='pages').find('a', class_='last').string
@@ -122,22 +123,22 @@ class PostParser():
         # print(self.__PageAmount)
         #=======================================================================
         self.__PostId = int(re.findall(r'\d+', self.__url)[0])
-        
+
         self.__initStartIndex()
-        
+
         self.__PageAmount = self.__getPageAmount(soup.find('div', class_='pages'))
         if self.__PageAmount == 1:
             self.__UrlQueue.put(self.__url)
             return True
-        
+
         #get the index page url format
         pagesHtml = soup.find('div', class_='pages')
         indexPattern = re.compile(r'href="(.+?extra=).*?">')
         indexFormatString = re.findall(indexPattern, str(pagesHtml))[0]
-        
+
         #retrieve the unique post ID from indexFormatString
-        
-        
+
+
         #to form a complete url as follows
         #http://club.eladies.sina.com.cn/viewthread.php?tid=5801720&amp;extra=&page=51
         rooturl = self.__url.split('/thread')[0] + '/'
@@ -148,10 +149,10 @@ class PostParser():
         return True
 
 
-    def __store(self): 
+    def __store(self):
         '''
         using PostId as the unique filename
-        store all the data in PageDic 
+        store all the data in PageDic
         - which means this can only called after parsing all the pages
         '''
         filePath = './data/%s'%self.__SubDir
@@ -209,7 +210,7 @@ class PostParser():
             self.__log('PostParser._parseContent: %s'%e)
             return None
         return content
-    
+
     def __log(self, e):
         filePath = './data/%s'%self.__SubDir
         filename = filePath + '/' + 'log.txt'
@@ -220,7 +221,7 @@ class PostParser():
                 (self.__PostId, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),\
                   e, self.__url))
         f.close()
-    
+
     def __pageParser(self):
         '''
         using the url stored in UrlQueue to parse the page and store it in PageDic
@@ -232,14 +233,14 @@ class PostParser():
         #print(self.__UrlQueue.empty())
         while not self.__UrlQueue.empty():#self.__UrlQueue
             url = self.__UrlQueue.get()
-            
+
             if self.__PageAmount != 1:
                 indexPattern = re.compile(r'page=(\d+)')
                 index = int(re.findall(indexPattern, url)[0])
             else:
                 index = 1#the very begining page may be different
                 #when there is only one page
-            
+
             #retrieve the html of the given url
             #if the first try failed, try for another two times
             html = None
@@ -249,14 +250,14 @@ class PostParser():
                     time.sleep(3)
                 else:
                     break;
-                    
+
             #if all hits failed, just run another url - this may not be a good choice
-            #once the one of the page is not withdrawn correctly, 
+            #once the one of the page is not withdrawn correctly,
             #all the rest should be ignored - TODO
             dicList = []
             dic = {}
             soup = BeautifulSoup(str(html))
-            
+
             if index == 1:#the first page will handle extra stuff
                 self.__Title = soup.title.string.encode('utf-8')
             floors = soup.findAll('div', class_='mainbox')
@@ -284,13 +285,13 @@ class PostParser():
                         rowString += s.encode('utf-8')
                     rowString = rowString.strip()
                     row = int(re.findall(r'\d+', rowString)[0])
-                    
+
                     #get the content of the floor
-                    
+
                     contentTag = floorSoup.find('div', class_='mybbs_cont')
                     content = self.__parseContent(contentTag)
-                    
-                    
+
+
                     dic['昵称'] = personName
                     dic['空间地址'] = personUrl
                     dic['用户等级'] = personLevel
@@ -324,7 +325,7 @@ class PostParser():
         self.__initUrlQueue()
         self.__pageParser()#11:01:26 - 11:06:14 110 - 5:48 - using just one process
         self.__store()
-    
+
 if __name__ == '__main__':
     #url = 'http://club.eladies.sina.com.cn/thread-5801720-1-1.html'
     print(datetime.datetime.now())
@@ -336,4 +337,4 @@ if __name__ == '__main__':
     print(datetime.datetime.now())
     endTime = datetime.datetime.now()
     print(endTime - startTime)
-          
+

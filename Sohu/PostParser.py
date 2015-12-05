@@ -1,8 +1,9 @@
 #coding=utf-8
 '''
-@since: 2015-6-30
-@author: Hearen
-@contact: LHearen@126.com
+Author: LHearen
+E-mail: LHearen@126.com
+Time  :	2015-12-05 10:47
+Description: Used to collect and parse the posts;
 '''
 import urllib
 import sys
@@ -25,14 +26,14 @@ import subprocess
 class PostParser():
     def __init__(self, clubUrl, url):
         self.__url = url # the url of the post - the very beginning page
-        
+
         self.__SubDir = clubUrl[7:].replace('.', '-').replace('/', '-')
         #./data/__SubDir/__PostId.txt used for different clubs
         #used by store and __initStartIndex
         #initialized in __initUrlQueue
         self.__UrlQueue = multiprocessing.Manager().Queue()##store all the urls to be parsed - to be parsed, not all maybe
         # - initialized in __initUrlQueue
-        self.__PostId = '' #the unique id of the post parsed from the url 
+        self.__PostId = '' #the unique id of the post parsed from the url
         #- initialized in __initUrlQueue
         self.__PageAmount = 1 #the total amount of the pages belonging to the post
         #- initialized in __initUrlQueue
@@ -45,18 +46,18 @@ class PostParser():
         #- initialized in __pageParser - only the first page will initialize this value
         self.__PostTime = ''#the post time will be the same with the post time of floor 1
         #- initialized in __pageParser - only the first page will initialize this value
-        
+
         self.__MaxFloorIndex = 1 #the maximum of floor
         #- set in pageParser - dynamically changed via the floor
-        
+
         #this factor can be useless when it comes to updated version
         #self.__BrowserCountString = '' #a number string of browser total amount - 99,232
         #- initialized in __pageParser - only floor 1 will initialize this value
-        
+
         self.__PageDic = {} #store all the page lists
         #each page list stores all the post dics in its page
         #the dics are used to store the info of each post
-    
+
     def __initStartIndex(self):
         """
         should be invoked after the self.__PostId initialized in initUrlQueue
@@ -64,7 +65,7 @@ class PostParser():
         to get the last page index and floor number parsed already
         """
         filename = './data/%s/%s'%(self.__SubDir, str(self.__PostId) + '.txt')
-        try:#handle the unexisting case - not create a file here 
+        try:#handle the unexisting case - not create a file here
             #- just wait the store method to do it
             f = open(filename, 'r')
             tmpString = ''
@@ -110,12 +111,12 @@ class PostParser():
             browser.create_webview()
             browser.set_html_parser(pyquery.PyQuery)
             browser.load(self.__url, 10)
-                 
+
             try:
                 browser.wait_load(10)
             except Exception as e:
                 pass
-                 
+
             html = browser.html.encode('utf-8')
             browser.close()
             if isinstance(html, int):
@@ -125,12 +126,12 @@ class PostParser():
         #if at last, still get nothing, return None
         if isinstance(html, int):
             return False
-        
+
         soup = BeautifulSoup(str(html))
-        
+
         #retrieve the unique post ID from url
         self.__PostId = self.__url.split('/thread/')[1]
-        
+
         self.__initStartIndex()
         pageTag = soup.find('div', id='toppage_thread').find('div', class_='pages')
         if pageTag is None:
@@ -146,10 +147,10 @@ class PostParser():
         return True
 
 
-    def __store(self): 
+    def __store(self):
         '''
         using PostId as the unique filename
-        store all the data in PageDic 
+        store all the data in PageDic
         - which means this can only called after parsing all the pages
         '''
         filePath = './data/%s'%self.__SubDir
@@ -214,7 +215,7 @@ class PostParser():
             self.__log('PostParser._parseContent: %s'%e)
             return None
         return content
-    
+
     def __log(self, e):
         filePath = './data/%s'%self.__SubDir
         filename = filePath + '/' + 'log.txt'
@@ -225,7 +226,7 @@ class PostParser():
                 (self.__PostId, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),\
                   e, self.__url))
         f.close()
-    
+
     def __getActualAmount(self, countString):
         '''
         get the number instead of number with special units like ��
@@ -236,7 +237,7 @@ class PostParser():
         else:
             count = int(re.findall(r'\d+', countString)[0]) * 10000
         return count
-    
+
     def __pageParser(self):
         '''
         using the url stored in UrlQueue to parse the page and store it in PageDic
@@ -245,27 +246,27 @@ class PostParser():
 
         while not self.__UrlQueue.empty():#self.__UrlQueue
             url = self.__UrlQueue.get()
-            
+
             index = int(re.findall(r'/p(\d+)', url)[0])
-            
+
             #retrieve the html of the given url
             #if the first try failed, try for another two times
             browser = spynner.Browser()
             browser.create_webview()
             browser.set_html_parser(pyquery.PyQuery)
             browser.load(url, 10)
-                 
+
             try:
                 browser.wait_load(10)
             except Exception as e:
                 pass
-                 
+
             html = browser.html.encode('utf-8')
             browser.close()
             dicList = []
             dic = {}
             soup = BeautifulSoup(str(html))
-            
+
             if index == 1:#the first page will handle extra stuff
                 self.__Title = soup.title.string.encode('utf-8')
             floors = soup.findAll('table', class_='viewpost')
@@ -312,10 +313,10 @@ class PostParser():
                         row = int(rowString)
                     else:
                         row += 1#increase by 1 when the row is not in ordinal form
-                    
+
                     #get the content of the floor
-                    
-                    
+
+
                     dic['楼数'] = row
                     dic['用户名'] = personName
                     dic['用户类型'] = userType
@@ -331,8 +332,8 @@ class PostParser():
                     dic['声望'] = reputationCount
                     dic['内容'] = content
                     dic['发帖时间'] = postTime
-                    
-                    if row == 0: 
+
+                    if row == 0:
                         self.__PostTime = postTime#the post time of the first floor is also the post time of the post
                     if row > self.__LastFloorIndex:
                         dicList.append(dic)
@@ -353,15 +354,15 @@ class PostParser():
         self.__pageParser()#11:01:26 - 11:06:14 110 - 5:48 - using just one process
         self.__store()
         print('Done parsing page: %s'%url)
-    
+
 if __name__ == '__main__':
     #url = 'http://club.eladies.sina.com.cn/thread-5801720-1-1.html'
     #startTime = datetime.datetime.now()
     clubUrl = 'http://women.club.sohu.com/zz482/threads'
-    url = 'http://women.club.sohu.com/zz482/thread/39uzzrkqos1' 
+    url = 'http://women.club.sohu.com/zz482/thread/39uzzrkqos1'
     parser = PostParser(clubUrl, url)
     parser.parse()
     print('Done parsing page: %s!!!'%url)
     #print(datetime.datetime.now())
     #endTime = datetime.datetime.now()
-    #print(endTime - startTime) 
+    #print(endTime - startTime)

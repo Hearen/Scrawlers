@@ -1,8 +1,9 @@
 #coding=utf-8
 '''
-@since: 2015-6-29
-@author: Hearen
-@contact: LHearen@126.com
+Author: LHearen
+E-mail: LHearen@126.com
+Time  :	2015-12-05 10:47
+Description: Used to collect and parse the posts;
 '''
 import urllib
 import re
@@ -22,14 +23,14 @@ import subprocess
 class PostParser():
     def __init__(self, clubUrl, url):
         self.__url = url # the url of the post - the very beginning page
-        
+
         self.__SubDir = clubUrl[7:].split('.html')[0].replace('.', '-').replace('/', '-')
         #./data/__SubDir/__PostId.txt used for different clubs
         #used by store and __initStartIndex
         #initialized in __initUrlQueue
         self.__UrlQueue = multiprocessing.Manager().Queue()##store all the urls to be parsed - to be parsed, not all maybe
         # - initialized in __initUrlQueue
-        self.__PostId = 0 #the unique id of the post parsed from the url 
+        self.__PostId = 0 #the unique id of the post parsed from the url
         #- initialized in __initUrlQueue
         self.__PageAmount = 1 #the total amount of the pages belonging to the post
         #- initialized in __initUrlQueue
@@ -37,23 +38,23 @@ class PostParser():
         #- initialized in __initStartIndex called in __initUrlQueue
         self.__LastFloorIndex = 0 #indexing the last floor parsed last time
         #- initialized in __initStartIndex called in __initUrlQueue
-        
+
         self.__Title = ''#the title and type and the like info will be stored
         #- initialized in __pageParser - only the first page will initialize this value
         self.__PostTime = ''#the post time will be the same with the post time of floor 1
         #- initialized in __pageParser - only the first page will initialize this value
-        
+
         self.__MaxFloorIndex = 1 #the maximum of floor
         #- set in pageParser - dynamically changed via the floor
-        
+
         #this factor can be useless when it comes to updated version
         #self.__BrowserCountString = '' #a number string of browser total amount - 99,232
         #- initialized in __pageParser - only floor 1 will initialize this value
-        
+
         self.__PageDic = {} #store all the page lists
         #each page list stores all the post dics in its page
         #the dics are used to store the info of each post
-    
+
     def __initStartIndex(self):
         """
         should be invoked after the self.__PostId initialized in initUrlQueue
@@ -61,7 +62,7 @@ class PostParser():
         to get the last page index and floor number parsed already
         """
         filename = './data/%s/%s'%(self.__SubDir, str(self.__PostId) + '.txt')
-        try:#handle the unexisting case - not create a file here 
+        try:#handle the unexisting case - not create a file here
             #- just wait the store method to do it
             f = open(filename, 'r')
             tmpString = ''
@@ -111,14 +112,14 @@ class PostParser():
         #if at last, still get nothing, return None
         if isinstance(html, int):
             return False
-        
+
         soup = BeautifulSoup(str(html))
-        
+
         #retrieve the unique post ID from url
         self.__PostId = int(re.findall(r'\d+', self.__url)[0])
-        
+
         self.__initStartIndex()
-        
+
         self.__PageAmount = self.__getPageAmount(soup.find('div', class_='pg'))
         if self.__PageAmount < 1:
             self.__PageAmount = 1
@@ -131,10 +132,10 @@ class PostParser():
         return True
 
 
-    def __store(self): 
+    def __store(self):
         '''
         using PostId as the unique filename
-        store all the data in PageDic 
+        store all the data in PageDic
         - which means this can only called after parsing all the pages
         '''
         filePath = './data/%s'%self.__SubDir
@@ -169,12 +170,12 @@ class PostParser():
                         for k, v in dic.iteritems():#one post including comments
                             if k != '评论':
                                 f.write(k + ':' + str(v) + '\n')
-                        if dic.has_key('评论'):#comments '评论' in dic.keys()    
+                        if dic.has_key('评论'):#comments '评论' in dic.keys()
                             f.write('评论:\n')
                             for commentDic in dic['评论']:#dicList
                                 f.write('\t--------------------\n')
                                 for k1, v1 in commentDic.iteritems():#comment dic
-                                    f.write('\t' + k1 + ':' + str(v1) + '\n') 
+                                    f.write('\t' + k1 + ':' + str(v1) + '\n')
             f.close()
         except Exception as e:
             self.__log("PostParser.__store %s"%e)
@@ -203,7 +204,7 @@ class PostParser():
             self.__log('PostParser._parseContent: %s'%e)
             return None
         return content
-    
+
     def __log(self, e):
         filePath = './data/%s'%self.__SubDir
         filename = filePath + '/' + 'log.txt'
@@ -214,7 +215,7 @@ class PostParser():
                 (self.__PostId, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),\
                   e, self.__url))
         f.close()
-    
+
     def __getActualAmount(self, countString):
         '''
         get the number instead of number with special units like 万
@@ -225,7 +226,7 @@ class PostParser():
         else:
             count = int(re.findall(r'\d+', countString)[0]) * 10000
         return count
-    
+
     def __pageParser(self):
         '''
         using the url stored in UrlQueue to parse the page and store it in PageDic
@@ -234,9 +235,9 @@ class PostParser():
 
         while not self.__UrlQueue.empty():#self.__UrlQueue
             url = self.__UrlQueue.get()
-            
+
             index = int(re.findall(r'\d+-(\d+)-\d+', url)[0])
-            
+
             #retrieve the html of the given url
             #if the first try failed, try for another two times
             html = None
@@ -246,14 +247,14 @@ class PostParser():
                     time.sleep(3)
                 else:
                     break;
-                    
+
             #if all hits failed, just run another url - this may not be a good choice
-            #once the one of the page is not withdrawn correctly, 
+            #once the one of the page is not withdrawn correctly,
             #all the rest should be ignored - TODO
             dicList = []
             dic = {}
             soup = BeautifulSoup(str(html))
-            
+
             if index == 1:#the first page will handle extra stuff
                 self.__Title = soup.title.string.encode('utf-8')
             floors = soup.findAll('div', id=re.compile(r'post_\d+'))
@@ -270,7 +271,7 @@ class PostParser():
                     postCount = 0
                     creditCount = 0
                     specialtyTag = floorSoup.find('div', class_='pi')
-                    
+
                     if specialtyTag is not None \
                          and '亚心网民' in self.__parseContent(specialtyTag):
                         personName = '亚心网民'
@@ -290,7 +291,7 @@ class PostParser():
                         topicCount = int(floorSoup.find('div', class_='tns xg2').findAll('p')[0].find('a').string.encode('utf-8'))
                         postCountString = floorSoup.find('div', class_='tns xg2').findAll('p')[1].find('a').string.encode('utf-8')
                         postCount = self.__getActualAmount(postCountString)
-                    
+
                         creditCountString = floorSoup.find('div', class_='tns xg2').findAll('p')[2].find('a').string.encode('utf-8')
                         creditCount = self.__getActualAmount(creditCountString)
                     postTimeString = floorSoup.find('td', class_='plc').find('div', class_='authi').find('em').string.encode('utf-8')
@@ -300,17 +301,17 @@ class PostParser():
                         row = int(rowString)
                     else:
                         row += 1#increase by 1 when the row is not formal
-                    
+
                     #get the content of the floor
-                    
+
                     contentTag = floorSoup.find('td', class_='t_f')
                     content = self.__parseContent(contentTag)
                     commentList = []
                     commentTmpTag = floorSoup.find('div', class_='cm')
                     if commentTmpTag is not None:
                         commentTags = commentTmpTag.findAll('div', class_='pstl xs1 cl')
-                        
-                    
+
+
                         for commentTag in commentTags:
                             commentDic = {}
                             commentSoup = BeautifulSoup(str(commentTag))
@@ -329,14 +330,14 @@ class PostParser():
                             commentDic['内容'] = cComment
                             commentDic['回复时间'] = postTime
                             commentList.append(commentDic)
-                    
+
                     dic['昵称'] = personName
                     dic['空间地址'] = personUrl
                     dic['用户头像'] = personHeadPortrait
                     dic['用户等级'] = personLevel
                     dic['积分'] = creditCount
                     dic['用户ID'] = personID
-                    dic['发起主题数'] = topicCount 
+                    dic['发起主题数'] = topicCount
                     dic['发帖数'] = postCount
                     dic['内容'] = content
                     dic['发帖时间'] = postTime
@@ -367,15 +368,15 @@ class PostParser():
         self.__pageParser()#11:01:26 - 11:06:14 110 - 5:48 - using just one process
         self.__store()
         print('Done parsing page: %s'%url)
-    
+
 if __name__ == '__main__':
     #url = 'http://club.eladies.sina.com.cn/thread-5801720-1-1.html'
     #startTime = datetime.datetime.now()
     clubUrl = 'http://bbs.iyaxin.com/forum-91-1.html'
-    url = 'http://bbs.iyaxin.com/thread-1003506-1-1.html' 
+    url = 'http://bbs.iyaxin.com/thread-1003506-1-1.html'
     parser = PostParser(clubUrl, url)
     parser.parse()
     print('Done parsing page: %s!!!'%url)
     #print(datetime.datetime.now())
     #endTime = datetime.datetime.now()
-    #print(endTime - startTime) 
+    #print(endTime - startTime)
