@@ -4,12 +4,12 @@ There are four hot clubs Mala<mala.cn>, Sina<sina.com.cn>, Sohu<sohu.com> and Ur
 
 # Scrawled attributes
 --------------------
-* Name         - Type   - Description	Others
-* Row          - int    - The floor number	Updated in each scrawling process
-* PostTime     - String - The time to post	Can be used in updating process to find the range to scrawl
-* PostAmount   - int    - The total number of posts the user posted	Can be used to get the importance of the post in a way ¨C referring to reply amount
-* Content      - String - The content of the post	Using [] to bracket the image source when containing some images
-* personUrl    - String - A url pointing to the personal space of the user	Via which we can access the personal space of a certain user
+ Name          - Type   - Description                                      - Others
+* Row          - int    - The floor number                                 - Updated in each scrawling process
+* PostTime     - String - The time to post                                 - Can be used in updating process to find the range to scrawl
+* PostAmount   - int    - The total number of posts the user posted        - Can be used to get the importance of the post in a way ¨C referring to reply amount
+* Content      - String - The content of the post                          - Using [] to bracket the image source when containing some images
+* personUrl    - String - A url pointing to the personal space of the user - Via which we can access the personal space of a certain user
 * personName   - String - The nickname of the user
 * personID     - String - A unique id of the user
 * personGender - String - The gender of the user
