@@ -13,6 +13,7 @@ There are four hot clubs Mala<mala.cn>, Sina<sina.com.cn>, Sohu<sohu.com> and Ur
 * personName   - String - The nickname of the user
 * personID     - String - A unique id of the user
 * personGender - String - The gender of the user
+
 -------------------- 
 Apart from the post structure shown in the above table, we will have another five elements to detail the post:
 * __PostId        - the unique id of the post
